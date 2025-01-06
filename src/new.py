@@ -4,12 +4,10 @@ import os
 import mimetypes
 from api import *
 import hashlib
+import base64
 
 # Service Selection
 scan_option = st.selectbox("Select a service to scan URLs", ["VirusTotal", "urlscan.io"])
-
-
-
 
 # Tabs for options
 
@@ -62,6 +60,9 @@ if scan_option == "VirusTotal":
     with tab2:
         st.subheader("URL Analysis")
         url = st.text_input("Enter a URL to scan")
+        
+
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         api_key = st.text_input("Enter your VirusTotal API key", type="password", key= "url_api_key")
         if not api_key:
             api_key = "4d6b3feadc43f4fee57105b967eec3eef71a2ee666ca62db779f2d545d767ce8"
@@ -69,12 +70,14 @@ if scan_option == "VirusTotal":
             if url and api_key:
                 st.success(f"Scanning URL: {url} using {scan_option}")
                 response = scan_url_virustotal(url, api_key)
+                print(response.json())
                 if response.status_code == 200:
                     st.success("File uploaded and scanned successfully!")
                     id = response.json()["data"]["id"]
-                    report_response = get_url_report(id, api_key)
-
+                    report_response = get_url_report(url_id, api_key)
+                    
                     st.json(report_response.json())
+                    
 
                 else:
                     st.error(f"Error: {response.status_code}")
@@ -90,9 +93,21 @@ else:
     
     st.subheader("URL Analysis")
     url = st.text_input("Enter a URL to scan")
+    api_key = st.text_input("Enter your URLScan API key", type="password", key= "url_api_key")
+    if not api_key:
+            urlscan_api_key = "e8b04ba3-1253-48f4-8599-2c9f2a6b1183"
     if st.button("Scan URL"):
-        if url:
+        if url and urlscan_api_key:
             st.success(f"Scanning URL: {url} using {scan_option}")
+           
+            response = urlscanio(urlscan_api_key, url)
+            print(response)
+            if response["result"]:
+                st.json(response)
+            else:
+                st.error(f"Error: {response.status_code}")
+                st.write(response.text)
+
         else:
             st.error("Please enter a valid URL.")
 

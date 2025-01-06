@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import mimetypes
 
+
 from PIL import Image
 from api import *
 # Page Configuration
