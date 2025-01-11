@@ -3,3 +3,6 @@ gatherUsageStats = false
 
 [theme]
 base = "light"
+
+[server]
+maxUploadSize = 600

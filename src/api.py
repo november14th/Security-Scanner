@@ -27,6 +27,21 @@ def large_size_files():
 
     return(response)
 
+def get_file_info(filehash):
+
+
+    url = f"https://www.virustotal.com/api/v3/files/{filehash}"
+    headers = {
+        "accept": "application/json",
+        "x-apikey": api_key,
+        "content-type": "application/x-www-form-urlencoded"
+    }
+
+    response = requests.get(url, headers=headers)
+    
+
+    return(response)
+
 def scan_url_virustotal(url, api_key):
 
     url = "https://www.virustotal.com/api/v3/urls"
@@ -44,6 +59,7 @@ def scan_url_virustotal(url, api_key):
 
 def get_url_report(id, api_key):
     print(f"hello,{id}")
+    
     url = f"https://www.virustotal.com/api/v3/urls/{id}"
 
     headers = {
@@ -66,7 +82,15 @@ def urlscanio(urlscan_api_key, domain):
     
     return(response.json())
 
+def urlscanresult(urlscan_api_key, result_id):
+    headers = {'API-Key':urlscan_api_key,'Content-Type':'application/json'}
     
+    url = f"https://urlscan.io/api/v1/result/{result_id}"
+    
+    
+    response = requests.get(url=url,headers=headers)
+    
+    return(response.json())
 
 
 
