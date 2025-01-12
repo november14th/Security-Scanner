@@ -8,9 +8,6 @@
 
 3. File Security:
 - Hash calculation performed locally before uploading files.
-- Files are uploaded only with user consent.
-- Temporary files are deleted immediately after upload.
-
 
 4. Result Presentation: Results are shown in JSON format and enhanced for clarity using AI.
 
@@ -62,11 +59,11 @@ Open http://localhost:8501 in your web browser to use the app.
 ## Environment Variables
 The project uses a .env file to store sensitive data such as API keys. Add the following variables to the .env file:
 
-
+```bash
 URLSCAN_API_KEY=<your_api_key_here>
 VIRUSTOTAL_API_KEY=<your_api_key_here>
 OPENAI_API_KEY=<your_api_key_here>
 GEMINI_API_KEY=<your_api_key_here>
-
+```
 
 
