@@ -1,7 +1,49 @@
 import requests
 import json
-api_key = "4d6b3feadc43f4fee57105b967eec3eef71a2ee666ca62db779f2d545d767ce8"
-urlscan_api_key = "25bb2a6d-afe4-4cb4-9c0c-19b452559701"
+import os
+from openai import OpenAI
+import google.generativeai as genai
+from dotenv import load_dotenv
+load_dotenv()
+
+api_key = os.getenv("VIRUSTOTAL_API_KEY")
+urlscan_api_key = os.getenv("URLSCAN_API_KEY")
+
+client = OpenAI(
+  api_key=os.getenv("OPENAI_API_KEY"))
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+
+
+
+
+def generate_description_openai(json_data):
+    prompt = f"Explain the following JSON data in a way that is easy to understand for both technical and non-technical users:\n\n{json.dumps(json_data, indent=2)}\n\nExplanation:"
+    completion = client.chat.completions.create(
+        model=genai.GenerativeModel("gemini-1.5-flash"), 
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that explains JSON data in simple terms."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=300,  # Adjust based on the desired length of the explanation
+        temperature=0.7,  # Adjust for creativity vs. accuracy
+    )
+    return completion.choices[0].message.content
+
+def generate_description_gemini(json_data):
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    
+    response = model.generate_content(f"""You are a cybersecurity expert skilled at interpreting and explaining scan results for both technical and non-technical audiences. Analyze the following scan results and provide:
+
+    A technical summary with key findings, including detected vulnerabilities, risk levels, affected systems, and potential impacts. Use precise language suitable for IT professionals or security analysts.
+    A non-technical explanation that simplifies the findings into clear, jargon-free language for stakeholders without a technical background. Highlight the risks, their potential consequences, and actionable next steps.
+    Recommendations for remediation or further investigation tailored to both audiences, ensuring they are actionable and understandable. 
+    Here is the input: \n\n{json.dumps(json_data, indent=2)}\n\n
+    Please do not provide recommendations. Just explain the result.""")
+
+    return (response.text)
+
 
 def small_size_files(files): 
     url = "https://www.virustotal.com/api/v3/files"
@@ -58,7 +100,7 @@ def scan_url_virustotal(url, api_key):
     return(response)
 
 def get_url_report(id, api_key):
-    print(f"hello,{id}")
+    
     
     url = f"https://www.virustotal.com/api/v3/urls/{id}"
 

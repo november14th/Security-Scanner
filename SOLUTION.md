@@ -13,3 +13,6 @@
 
 
 4. Result Presentation: Results are shown in JSON format and can be enhanced for clarity using AI in future iterations.
+
+## How to run in docker?
+
