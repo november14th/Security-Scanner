@@ -141,17 +141,17 @@ def urlscanio(urlscan_api_key, domain):
 
 
 
-async def urlscanresult(urlscan_api_key, result_id):
+def urlscanresult(urlscan_api_key, result_id):
     headers = {'API-Key':urlscan_api_key,'Content-Type':'application/json'}
     # print("uuid", result_id)
     url = f"https://urlscan.io/api/v1/result/{result_id}"
-    # response = requests.get(url=url,headers=headers)
+    response = requests.get(url=url,headers=headers)
     # print("response", response)
-    # return(response.json())
+    return(response.json())
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url,headers=headers) as response:
-            return await response.json()
+    # async with aiohttp.ClientSession() as session:
+    #     async with session.post(url,headers=headers) as response:
+    #         return await response.json()
 
 
 
