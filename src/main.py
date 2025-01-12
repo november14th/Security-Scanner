@@ -10,7 +10,6 @@ import time
 scan_option = st.selectbox("Select a service to scan URLs", ["VirusTotal", "urlscan.io"])
 
 # Tabs for options
-
 if scan_option == "VirusTotal":
     
     st.image("assets/virustotal-svgrepo-com.svg", width=30)
@@ -179,20 +178,19 @@ else:
         if url and urlscan_api_key:
             st.success(f"Scanning URL: {url} using {scan_option}")
            
+            # response = asyncio.run(urlscanio(urlscan_api_key, url))
             response = urlscanio(urlscan_api_key, url)
             
-            # print(response)
-            if response["result"]:
+            print(response)
+            if response['message'] == 'Submission successful' and response["result"]:
                 
                 link = response["result"] 
                 uuid = response["uuid"]
-                
-                time.sleep(10)
-                # while response["status"] != "200":
+                time.sleep(15)
                 result = urlscanresult(urlscan_api_key, uuid)
                 st.subheader("Original Scan Results")
                 with st.container(height=400): 
-                    st.json(result)
+                    st.json(result) 
                     
 
                 with st.spinner("Summarizing with AI..."):
@@ -201,7 +199,7 @@ else:
                 
 
             else:
-                st.error(f"Error: {response.status_code}")
+                st.error(f"Error: {response}")
                 st.write(response.text)
 
         else:

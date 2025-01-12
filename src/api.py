@@ -1,6 +1,9 @@
 import requests
 import json
 import os
+import time
+import aiohttp
+import asyncio
 from openai import OpenAI
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -13,11 +16,7 @@ urlscan_api_key = os.getenv("URLSCAN_API_KEY")
 client = OpenAI(
   api_key=os.getenv("OPENAI_API_KEY"))
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-
-
-
+genai.configure(api_key=os.getenv(""))
 
 def generate_description_openai(json_data):
     prompt = f"Explain the following JSON data in a way that is easy to understand for both technical and non-technical users:\n\n{json.dumps(json_data, indent=2)}\n\nExplanation:"
@@ -136,19 +135,24 @@ def urlscanio(urlscan_api_key, domain):
     url = "https://urlscan.io/api/v1/scan/"
     
     data = {"url": domain, "visibility": "public"}
+    headers = {'API-Key': urlscan_api_key, 'Content-Type': 'application/json'}
     response = requests.post(url=url,headers=headers, data=json.dumps(data))
-    
     return(response.json())
 
-def urlscanresult(urlscan_api_key, result_id):
+
+
+async def urlscanresult(urlscan_api_key, result_id):
     headers = {'API-Key':urlscan_api_key,'Content-Type':'application/json'}
-    
+    # print("uuid", result_id)
     url = f"https://urlscan.io/api/v1/result/{result_id}"
-    
-    
-    response = requests.get(url=url,headers=headers)
-    
-    return(response.json())
+    # response = requests.get(url=url,headers=headers)
+    # print("response", response)
+    # return(response.json())
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url,headers=headers) as response:
+            return await response.json()
+
 
 
 # def virustotal_api_usage(id, virustotal_api_key):
@@ -162,5 +166,29 @@ def urlscanresult(urlscan_api_key, result_id):
 
 #     print(response.text)
 
+# async def urlscanio(urlscan_api_key, domain):
+#     headers = {'API-Key':urlscan_api_key,'Content-Type':'application/json'}
+    
+#     url = "https://urlscan.io/api/v1/scan/"
+    
+#     data = {"url": domain, "visibility": "public"}
+#     headers = {'API-Key': urlscan_api_key, 'Content-Type': 'application/json'}
+#     # response = requests.post(url=url,headers=headers, data=json.dumps(data))
+#     # return(response.json())
 
+#     async with aiohttp.ClientSession() as session:
+#         async with session.post(url,headers=headers, json=data) as response:
+#             return await response.json()
 
+async def urlscan_logic(urlscan_api_key, url):
+    response = await urlscanio(urlscan_api_key, url)
+    print("response", response)
+    if response['message'] == 'Submission successful' and response.get("uuid"):
+        link = response["result"]
+        uuid = response["uuid"]
+        
+        # time.sleep(10)
+        result = urlscanresult(urlscan_api_key, uuid)
+        return result
+    else:
+        return {"error": "Scan failed", "details": response}

@@ -21,8 +21,8 @@
 ## Setup Instructions
 ### 1. Clone the repository
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+git clone https://github.com/november14th/associate-security-engineer-task-amrit-aryal 
+cd associate-security-engineer-task-amrit-aryal/
 ```
 
 ### 2. Set Up a Virtual Environment
@@ -48,22 +48,21 @@ After running the command, Streamlit will provide a local URL (e.g., http://loca
 
 #### Using Docker
 ##### 1. Build the Docker Image
+```bash
 docker build -t security-scanner .
+```
 
 ##### 2. Run the Docker Container
+```bash
 docker run -p 8501:8501 streamlit-app
+```
 
 ##### 3. Access the App
 Open http://localhost:8501 in your web browser to use the app.
 
 ## Environment Variables
-The project uses a .env file to store sensitive data such as API keys. Add the following variables to the .env file:
+The project uses a .env file to store sensitive data such as API keys. Add your api keys as in .env.example.
 
-```bash
-URLSCAN_API_KEY=<your_api_key_here>
-VIRUSTOTAL_API_KEY=<your_api_key_here>
-OPENAI_API_KEY=<your_api_key_here>
-GEMINI_API_KEY=<your_api_key_here>
-```
+
 
 
