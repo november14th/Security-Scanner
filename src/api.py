@@ -6,7 +6,8 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 load_dotenv()
 
-api_key = os.getenv("VIRUSTOTAL_API_KEY")
+virustotal_api_key = os.getenv("VIRUSTOTAL_API_KEY")
+
 urlscan_api_key = os.getenv("URLSCAN_API_KEY")
 
 client = OpenAI(
@@ -26,47 +27,63 @@ def generate_description_openai(json_data):
             {"role": "system", "content": "You are a helpful assistant that explains JSON data in simple terms."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=300,  # Adjust based on the desired length of the explanation
-        temperature=0.7,  # Adjust for creativity vs. accuracy
+        max_tokens=300,  
+        temperature=0.7,  
     )
     return completion.choices[0].message.content
 
 def generate_description_gemini(json_data):
     model = genai.GenerativeModel("gemini-1.5-flash")
     
-    response = model.generate_content(f"""You are a cybersecurity expert skilled at interpreting and explaining scan results for both technical and non-technical audiences. Analyze the following scan results and provide:
 
-    A technical summary with key findings, including detected vulnerabilities, risk levels, affected systems, and potential impacts. Use precise language suitable for IT professionals or security analysts.
-    A non-technical explanation that simplifies the findings into clear, jargon-free language for stakeholders without a technical background. Highlight the risks, their potential consequences, and actionable next steps.
-    Recommendations for remediation or further investigation tailored to both audiences, ensuring they are actionable and understandable. 
-    Here is the input: \n\n{json.dumps(json_data, indent=2)}\n\n
-    Please do not provide recommendations. Just explain the result.""")
+    response = model.generate_content(f"""You are a cybersecurity analyst with expertise in analyzing scan results and generating detailed reports. Your task is to analyze the following JSON data from a URL or file scan and provide a comprehensive report. Give h2 to title and h3 to below mentioned headings. The report should include the following sections:
 
-    return (response.text)
+    1. **Overview**:
+    - Summarize the scan results in 2-3 sentences.
+    - Highlight the most critical findings (e.g., security risks, performance issues).
+
+    2. **Threat Indicators**:
+    - List any identified threats (e.g., malware, phishing, vulnerabilities).
+    - Include severity levels (e.g., high, medium, low) and descriptions.
+
+    3. **Behavioral Analysis**:
+    - Describe any observed behaviors (e.g., network activity, file modifications).
+    - Highlight suspicious or malicious activities.
+
+    4. **Technical Details**:
+    - Provide technical insights into the findings (e.g., specific vulnerabilities, attack vectors).
+    - Include relevant metadata (e.g., IP addresses, domains, file hashes).
+
+    5. **Recommendations**:
+    - Suggest actionable steps to mitigate identified risks.
+    - Provide best practices for improving security.
+
+    6. **Conclusion**:
+    - Summarize the overall risk level (e.g., low, moderate, high).
+    - Provide a final assessment of the scan results.
+
+    Here is the JSON data to analyze:{json.dumps(json_data, indent=2)}
+
+    Generate the report in Markdown format with clear headings and bullet points for readability.""")
+    return(response.text)
 
 
 def small_size_files(files): 
-    url = "https://www.virustotal.com/api/v3/files"
 
+    url = "https://www.virustotal.com/api/v3/files"
     headers = {
         "accept": "application/json",
         "content-type": "multipart/form-data",
-        "x-apikey": api_key
+        "x-apikey": virustotal_api_key
     }
-
     response = requests.post(url, headers=headers, files=files)
-
     return(response)
 
 def large_size_files():
 
-
     url = "https://www.virustotal.com/api/v3/files/upload_url"
     headers = {"accept": "application/json"}
-
     response = requests.get(url, headers=headers)
-    
-
     return(response)
 
 def get_file_info(filehash):
@@ -75,23 +92,22 @@ def get_file_info(filehash):
     url = f"https://www.virustotal.com/api/v3/files/{filehash}"
     headers = {
         "accept": "application/json",
-        "x-apikey": api_key,
+        "x-apikey": virustotal_api_key,
         "content-type": "application/x-www-form-urlencoded"
     }
 
     response = requests.get(url, headers=headers)
-    
 
     return(response)
 
-def scan_url_virustotal(url, api_key):
+def scan_url_virustotal(url, virustotal_api_key):
 
     url = "https://www.virustotal.com/api/v3/urls"
 
     payload = { "url": url }
     headers = {
         "accept": "application/json",
-        "x-apikey": api_key,
+        "x-apikey": virustotal_api_key,
         "content-type": "application/x-www-form-urlencoded"
     }
 
@@ -99,14 +115,14 @@ def scan_url_virustotal(url, api_key):
 
     return(response)
 
-def get_url_report(id, api_key):
+def get_url_report(id, virustotal_api_key):
     
     
     url = f"https://www.virustotal.com/api/v3/urls/{id}"
 
     headers = {
         "accept": "application/json",
-        "x-apikey": api_key,
+        "x-apikey": virustotal_api_key,
         "content-type": "application/x-www-form-urlencoded"
     }
     response = requests.get(url=url, headers = headers)
@@ -133,6 +149,18 @@ def urlscanresult(urlscan_api_key, result_id):
     response = requests.get(url=url,headers=headers)
     
     return(response.json())
+
+
+# def virustotal_api_usage(id, virustotal_api_key):
+#     url = f"https://www.virustotal.com/api/v3/users/{virustotal_api_key}"
+#     headers = {
+#         "accept": "application/json",
+#         "x-apikey": virustotal_api_key
+#     }
+
+#     response = requests.get(url, headers=headers)
+
+#     print(response.text)
 
 
 

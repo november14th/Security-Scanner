@@ -6,8 +6,6 @@ import base64
 import time
 
 
-
-
 # Service Selection
 scan_option = st.selectbox("Select a service to scan URLs", ["VirusTotal", "urlscan.io"])
 
@@ -19,6 +17,7 @@ if scan_option == "VirusTotal":
     
     st.markdown("""Analyse suspicious files, domains, IPs and URLs to detect malware and other breaches, automatically share them with the security community.""")
     tab1, tab2 = st.tabs(["FILE", "URL"])
+
     with tab1:
         st.subheader("File Analysis")
         uploaded_file = st.file_uploader("Upload a file to analyze", type=["jpeg", "png", "exe", "dll", "pdf", "docx", "xlsx", "zip", "rar"])
@@ -26,38 +25,7 @@ if scan_option == "VirusTotal":
         
         api_key = st.text_input("Enter your VirusTotal API key", type="password")
         if not api_key:
-            api_key = "4d6b3feadc43f4fee57105b967eec3eef71a2ee666ca62db779f2d545d767ce8"
-        st.sidebar.subheader("Check API Quotas")
-        if st.sidebar.button("Fetch Quotas"):
-            if api_key:
-                url = "https://urlscan.io/user/quotas/"
-                headers = {"Content-Type": "application/json", "API-Key": api_key}
-                
-                try:
-                    response = requests.get(url, headers=headers)
-                    if response.status_code == 200:
-                        quotas = response.json()
-                        st.sidebar.subheader("Quota Information")
-                        for category, data in quotas.items():
-                            if isinstance(data, dict):  # Handle nested dictionaries
-                                st.sidebar.markdown(f"### {category.capitalize()}")
-                                for subcategory, details in data.items():
-                                    if isinstance(details, dict):
-                                        st.sidebar.markdown(f"#### {subcategory.capitalize()}")
-                                        for key, value in details.items():
-                                            st.sidebar.write(f"{key.capitalize()}: {value}")
-                                    else:
-                                        st.sidebar.write(f"{subcategory.capitalize()}: {details}")
-                            else:
-                                st.sidebar.write(f"{category.capitalize()}: {data}")
-                    else:
-                        st.sidebar.error(f"Failed to fetch quotas. Status code: {response.status_code}")
-                        st.sidebar.text(response.text)
-                except Exception as e:
-                    st.sidebar.error("An error occurred while fetching quotas.")
-                    st.sidebar.exception(e)
-            else:
-                st.sidebar.warning("Please enter your API key.")
+            api_key = os.getenv("VIRUSTOTAL_API_KEY")
         if uploaded_file and api_key:
             if st.button("Scan File"):
                 # Save the uploaded file temporarily
@@ -75,9 +43,9 @@ if scan_option == "VirusTotal":
                         st.json(response.json())
 
                     
-                    with st.spinner("Generating explanation..."):
+                    with st.spinner("Summarizing with AI..."):
                         description = generate_description_gemini(response.json())
-                        st.subheader("Human-Readable Explanation")
+                        
                         st.write(description)
                 else:
                     st.error(f"Error: {response.status_code}")
@@ -94,18 +62,49 @@ if scan_option == "VirusTotal":
         url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         api_key = st.text_input("Enter your VirusTotal API key", type="password", key= "url_api_key")
         if not api_key:
-            api_key = "4d6b3feadc43f4fee57105b967eec3eef71a2ee666ca62db779f2d545d767ce8"
+            api_key = os.getenv("VIRUSTOTAL_API_KEY")
+        st.sidebar.subheader("Check API Quotas")
+        api_key_quota = st.sidebar.text_input("Enter your URLScan API key", type="password")
         
-               
+        if st.sidebar.button("Check API Usage"):
+    
+
+            if api_key_quota:
+                url = f"https://www.virustotal.com/api/v3/users/{virustotal_api_key}/overall_quotas"
+                headers = {"Content-Type": "application/json", "x-apikey": virustotal_api_key}
+                
+                try:
+                    response = requests.get(url, headers=headers)
+                    if response.status_code == 200:
+                        quotas = response.json()
+                        st.sidebar.subheader("Quota Information")
+                        
+                        for category, data in quotas.items():
+                            
+                            for subcategory, details in data.items():
+
+                                if subcategory in ["api_requests_hourly", "api_requests_daily", "api_requests_monthly"]:
+                                    if isinstance(details, dict) and "user" in details:
+                                        allowed = details["user"]["allowed"]
+                                        used = details["user"]["used"]
+                                        st.sidebar.write(f"{subcategory.replace('_', ' ').capitalize()}: **{used}/{allowed}**")
+                    else:
+                        st.sidebar.error(f"Failed to fetch quotas. Status code: {response.status_code}")
+                        st.sidebar.text(response.text)
+                except Exception as e:
+                    st.sidebar.error("An error occurred while fetching quotas.")
+                    st.sidebar.exception(e)
+            else:
+                st.sidebar.warning("Please fill valid API key.")
+                
         if st.button("Scan URL"):
             if url and api_key:
                 st.success(f"Scanning URL: {url} using {scan_option}")
                 response = scan_url_virustotal(url, api_key)
-                print(response.json())
+                # print(response.json())
                 if response.status_code == 200:
-                    st.success("File uploaded and scanned successfully!")
-                    id = response.json()["data"]["id"]
-                    print(id)
+                    
+                    id = response.json()["data"]["id"]  
                     
                     report_response = get_url_report(url_id, api_key)
                     
@@ -113,12 +112,12 @@ if scan_option == "VirusTotal":
                     with st.container(height=400): 
                         st.json(report_response.json())
                     
-                    if st.button("Generate Human-Readable Explanation"):
+                    
 
-                        with st.spinner("Generating explanation..."):
-                            description = generate_description_gemini(report_response.json())
-                            st.subheader("Human-Readable Explanation")
-                            st.write(description)
+                    with st.spinner("Summarizing with AI..."):
+                        description = generate_description_gemini(report_response.json())
+                        
+                        st.write(description)
                 
 
                 else:
@@ -139,75 +138,67 @@ else:
     url = st.text_input("Enter a URL to scan")
     api_key = st.text_input("Enter your URLScan API key", type="password", key= "url_api_key")
     if not api_key:
-            urlscan_api_key = "e8b04ba3-1253-48f4-8599-2c9f2a6b1183"
-    # st.sidebar.subheader("Check API Quotas")
-    # if st.sidebar.button("Fetch Quotas"):
-    #     if api_key:
-    #         url = "https://urlscan.io/user/quotas/"
-    #         headers = {"Content-Type": "application/json", "API-Key": api_key}
+            urlscan_api_keyapi_key = os.getenv("URLSCAN_API_KEY")
+    st.sidebar.subheader("Check API Quotas")
+    api_key_quota = st.sidebar.text_input("Enter your URLScan API key", type="password")
+    if st.sidebar.button("Fetch Quotas"):
+        
+
+        if api_key_quota:
+            url = "https://urlscan.io/user/quotas/"
+            headers = {"Content-Type": "application/json", "API-Key": api_key}
             
-    #         try:
-    #             response = requests.get(url, headers=headers)
-    #             if response.status_code == 200:
-    #                 quotas = response.json()
-    #                 st.sidebar.subheader("Quota Information")
-    #                 for category, data in quotas.items():
-    #                     if isinstance(data, dict):  # Handle nested dictionaries
-    #                         st.sidebar.markdown(f"### {category.capitalize()}")
-    #                         for subcategory, details in data.items():
-    #                             if isinstance(details, dict):
-    #                                 st.sidebar.markdown(f"#### {subcategory.capitalize()}")
-    #                                 for key, value in details.items():
-    #                                     st.sidebar.write(f"{key.capitalize()}: {value}")
-    #                             else:
-    #                                 st.sidebar.write(f"{subcategory.capitalize()}: {details}")
-    #                     else:
-    #                         st.sidebar.write(f"{category.capitalize()}: {data}")
-    #             else:
-    #                 st.sidebar.error(f"Failed to fetch quotas. Status code: {response.status_code}")
-    #                 st.sidebar.text(response.text)
-    #         except Exception as e:
-    #             st.sidebar.error("An error occurred while fetching quotas.")
-    #             st.sidebar.exception(e)
-    #     else:
-    #         st.sidebar.warning("Please enter your API key.")
+            try:
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    quotas = response.json()
+                    st.sidebar.subheader("Quota Information")
+
+                    for category, data in quotas["limits"].items():
+                        if category in ["public", "private", "unlisted"]:
+                            st.sidebar.write(category.capitalize())
+                            for time_frame, details in data.items():
+                                limit = details["limit"]
+                                used = details["used"]
+                                
+                                st.sidebar.write(f"{time_frame.capitalize()}: **{used}/{limit}**")
+                            st.sidebar.markdown("""---""")
+                        
+                   
+
+
+                else:
+                    st.sidebar.error(f"Failed to fetch quotas. Status code: {response.status_code}")
+                    st.sidebar.text(response.text)
+            except Exception as e:
+                st.sidebar.error("An error occurred while fetching quotas.")
+                st.sidebar.exception(e)
+        else:
+            st.sidebar.warning("Please enter your API key.")
     if st.button("Scan URL"):
         if url and urlscan_api_key:
             st.success(f"Scanning URL: {url} using {scan_option}")
            
             response = urlscanio(urlscan_api_key, url)
+            
             # print(response)
             if response["result"]:
                 
                 link = response["result"] 
                 uuid = response["uuid"]
+                
                 time.sleep(10)
+                # while response["status"] != "200":
                 result = urlscanresult(urlscan_api_key, uuid)
                 st.subheader("Original Scan Results")
                 with st.container(height=400): 
                     st.json(result)
-                if st.button("Generate Human-Readable Explanation"):
+                    
 
-                    with st.spinner("Generating explanation..."):
-                            description = generate_description_gemini(result)
-                            print(description)
-                            st.subheader("Human-Readable Explanation")
-                            st.write(description)
-                # st.components.v1.iframe(link, width=800, height=600)
-                # 
-                # st.spinner("Polling for scan results...")
+                with st.spinner("Summarizing with AI..."):
+                        description = generate_description_gemini(result)
+                        st.write(description)
                 
-                
-                # st.markdown(f"🔗 Click [here]({link}) to view the complete result.", unsafe_allow_html=True)
-                
-                # if st.button("Generate Human-Readable Explanation"):
-                #     print("hello")
-                #     description = generate_description_gemini(result)
-                #     print("here")
-                #     st.subheader("Human-Readable Explanation")
-                #     st.write(description)
-        
-            # st.json(response)
 
             else:
                 st.error(f"Error: {response.status_code}")
