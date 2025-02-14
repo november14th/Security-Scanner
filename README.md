@@ -1,4 +1,4 @@
-# Associate Security Engineer Technical Task - UXCam
+
 
 ## Objective
 
@@ -45,16 +45,7 @@ Feel free to explore creative approaches such as integrating additional services
 - A summary of your design decisions, API integrations and security considerations. Also mention anything you needed to work on besides the source code.
 - Use the file [SOLUTION.md](./SOLUTION.md) for your documentation.
 
-## Submission
 
-1. Generate a repository from this template. You can use [this](https://github.com/new?owner=uxcam&template_name=associate-security-engineer-task&template_owner=uxcam&visibility=private) link.
-   - Name the repository: `associate-security-engineer-task-<your-name>`
-   - Set the repository to **Private** if itsn't already.
-     ![Generate repo](./assets/generate-repo.png)
-2. Clone the repository to your local machine, make changes and push them.
-3. Once you are done:
-   - Add the user `prajwol-uxcam` ([profile](https://github.com/prajwol-uxcam)) as a collaborator ([docs](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-access-to-your-personal-repositories/inviting-collaborators-to-a-personal-repository)).
-   - Send us the repo link confirming that you have completed the task.
 
 ## Resources
 
